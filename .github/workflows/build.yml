@@ -1,0 +1,46 @@
+name: Build
+
+on:
+  push:
+    branches: ['**']
+    tags-ignore: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      # Gradle provisions the per-version toolchains (Java 25 for 26.x, Java 21 for 1.21.1) itself; this JDK runs Gradle.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      # Every Minecraft version on both loaders, and the unit tests.
+      - run: ./gradlew build --stacktrace
+
+      - if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-reports
+          path: '**/build/reports/tests/'
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: jars
+          path: |
+            neoforge/versions/*/build/libs/*.jar
+            fabric/versions/*/build/libs/*.jar
+            !**/*-sources.jar
+          if-no-files-found: warn

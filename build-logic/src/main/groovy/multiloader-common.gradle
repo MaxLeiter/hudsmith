@@ -1,0 +1,130 @@
+plugins {
+    id 'java-library'
+}
+
+// Applied to the Stonecutter version subprojects (:common:26.3, :neoforge:1.21.1...): the parent project is the
+// loader (or common), and the project's own name is the Minecraft version.
+def platform = project.parent.name
+// Every version subproject of every branch is named after its Minecraft version, and Gradle takes projects with the
+// same group, name and version for the same module, so each branch gets a group of its own.
+group = "${project.group}.${platform}"
+
+base {
+    archivesName = "${mod_id}-${platform}-${minecraft_version}"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(java_version as int)
+    withSourcesJar()
+}
+
+repositories {
+    // Vellum releases are on maven.maxleiter.com; an unreleased one comes from mavenLocal (`./gradlew
+    // publishToMavenLocal` in a Vellum checkout).
+    maven {
+        name = 'MaxLeiter'
+        url = uri('https://maven.maxleiter.com')
+        content { includeGroup('dev.vellum') }
+    }
+    mavenLocal {
+        content { includeGroup('dev.vellum') }
+    }
+    exclusiveContent {
+        forRepository { maven { name = 'TerraformersMC'; url = uri('https://maven.terraformersmc.com/releases') } }
+        filter { includeGroup('com.terraformersmc') }
+    }
+}
+
+tasks.withType(Jar).configureEach {
+    from(rootProject.file('LICENSE')) {
+        rename { "${it}_${mod_name}" }
+    }
+}
+
+jar {
+    manifest {
+        attributes([
+                'Specification-Title'   : mod_name,
+                'Specification-Vendor'  : mod_author,
+                'Specification-Version' : project.jar.archiveVersion,
+                'Implementation-Title'  : platform,
+                'Implementation-Version': project.jar.archiveVersion,
+                'Implementation-Vendor' : mod_author,
+                'Built-On-Minecraft'    : minecraft_version
+        ])
+    }
+}
+
+processResources {
+    var expandProps = [
+            'version'                      : version,
+            'minecraft_version'            : minecraft_version,
+            'minecraft_version_range'      : minecraft_version_range,
+            'fabric_minecraft_version'     : fabric_minecraft_version,
+            'fabric_loader_version'        : fabric_loader_version,
+            'mod_name'                     : mod_name,
+            'mod_author'                   : mod_author,
+            'mod_id'                       : mod_id,
+            'license'                      : license,
+            'description'                  : project.description,
+            'homepage'                     : homepage,
+            'issues'                       : issues,
+            'neoforge_version'             : neoforge_version,
+            'neoforge_loader_version_range': neoforge_loader_version_range,
+            'neoforge_logo_key'            : neoforge_logo_key,
+            'credits'                      : credits,
+            'java_version'                 : java_version,
+            'vellum_version'               : vellum_version
+    ]
+
+    var jsonExpandProps = expandProps.collectEntries {
+        key, value -> [(key): value instanceof String ? value.replace('\n', '\\\\n') : value]
+    }
+
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand expandProps
+    }
+
+    filesMatching('fabric.mod.json') {
+        expand jsonExpandProps
+    }
+
+    inputs.properties(expandProps)
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['-Xlint:deprecation', '-Xlint:unchecked'])
+}
+
+dependencies {
+    // 26.x ships JSpecify with Minecraft; older versions don't.
+    if (stonecutter.current.parsed < '26') compileOnly('org.jspecify:jspecify:1.0.0')
+}
+
+// Gradle tells the loaders' and common's variants apart by this attribute: each project marks its own.
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+ext.loaderAttribute = loaderAttribute
+['apiElements', 'runtimeElements', 'sourcesElements'].each { variant ->
+    configurations.named(variant) {
+        attributes {
+            attribute(loaderAttribute, platform)
+        }
+    }
+}
+sourceSets.configureEach {
+    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName].each { variant ->
+        configurations.named(variant) {
+            attributes {
+                attribute(loaderAttribute, platform)
+            }
+        }
+    }
+}
+
+// ModDevGradle (common and NeoForge) sets up Minecraft from the sources Stonecutter generates for this version.
+if (!stonecutter.current.isActive) {
+    tasks.matching { it.name == 'createMinecraftArtifacts' }.configureEach {
+        dependsOn(tasks.named('stonecutterGenerate'))
+    }
+}

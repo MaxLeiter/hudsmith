@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+  <title>Hudsmith: Performance</title>
+  <!--
+    How the game is running: frames per second and the server's tick time over the last half minute, drawn by this
+    page's own script on canvases, with the tick budget, ping and memory. The history lives in the page, so it starts
+    over when the HUD reloads.
+  -->
+  <link rel="stylesheet" href="hud.css">
+  <script src="hudsmith:vellum/lib/hud.js"></script>
+</head>
+<body>
+  <div class="panel" v-if="!debug" v-cloak>
+    <div class="metric">
+      <div class="head"><span class="label">FPS</span><span class="big" :style="{ color: fpsColor(fps) }">{{ fps }}</span><span class="dim">{{ stats.fpsLow }} low</span></div>
+      <canvas id="fps" width="120" height="22"></canvas>
+    </div>
+
+    <div class="metric" v-if="mspt != null">
+      <div class="head"><span class="label">MSPT</span><span class="big" :style="{ color: msptColor(mspt) }">{{ mspt.toFixed(1) }}</span><span class="dim">{{ tps }} tps</span></div>
+      <canvas id="mspt" width="120" height="22"></canvas>
+      <div class="budget"><div class="used" :style="{ width: Math.min(100, mspt / 50 * 100) + '%', background: msptColor(mspt) }"></div></div>
+    </div>
+
+    <div class="row" v-if="ping != null"><span class="label">Ping</span><span>{{ ping }} ms</span></div>
+    <div class="row">
+      <span class="label">Memory</span>
+      <span>{{ size(memory.used) }} / {{ size(memory.max) }}</span>
+    </div>
+    <div class="budget"><div class="used" :style="{ width: percent(memory.used, memory.max) + '%', background: percent(memory.used, memory.max) > 85 ? '#ff6b6b' : '#6bb5ff' }"></div></div>
+    <div class="row"><span class="label">Entities</span><span>{{ entities }}</span></div>
+  </div>
+
+  <script>
+    const SAMPLES = 120;            // 4 a second for 30 seconds
+    const history = { fps: [], mspt: [] };
+    const stats = vellum.state({ stats: { fpsLow: '-' } }).stats;
+    let lastSample = 0;
+
+    vellum.on('data', data => {
+      const now = Date.now();
+      if (now - lastSample < 250) return;
+      lastSample = now;
+      push(history.fps, data.fps);
+      if (data.mspt != null) push(history.mspt, data.mspt);
+      // The 1% low: what the worst moments of the last half minute looked like.
+      const sorted = history.fps.toSorted((a, b) => a - b);
+      stats.fpsLow = sorted[Math.floor(sorted.length / 100)] ?? '-';
+      // Scaled to what was measured, with headroom, so the shape shows at any frame rate.
+      draw('fps', history.fps, Math.max(...history.fps) * 1.25, fpsColor);
+      draw('mspt', history.mspt, Math.max(50, ...history.mspt) * 1.1, msptColor);
+    });
+
+    function push(list, value) {
+      list.push(value);
+      if (list.length > SAMPLES) list.shift();
+    }
+
+    // One-pixel columns, newest on the right, each colored by how good it was.
+    function draw(id, values, max, color) {
+      const canvas = document.getElementById(id);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const start = canvas.width - values.length;
+      values.forEach((value, i) => {
+        const h = Math.max(1, Math.round(Math.min(value, max) / max * canvas.height));
+        ctx.fillStyle = color(value);
+        ctx.fillRect(start + i, canvas.height - h, 1, h);
+      });
+    }
+
+    // Green when it's smooth, yellow when it's struggling, red when it's not keeping up.
+    function fpsColor(fps) {
+      return fps >= 60 ? '#55ff55' : fps >= 30 ? '#ffff55' : '#ff5555';
+    }
+
+    // 50 ms is a whole tick: past that the server falls behind.
+    function msptColor(mspt) {
+      return mspt <= 25 ? '#55ff55' : mspt <= 50 ? '#ffff55' : '#ff5555';
+    }
+  </script>
+</body>
+</html>

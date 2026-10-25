@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <title>Hudsmith</title>
+  <!--
+    Your HUD. Every value Hudsmith knows is a name you can use here: {{ fps }}, {{ biome.name }}, v-if="slime_chunk"...
+    VALUES.md, next to this file, lists them all, and the Hudsmith screen (/hudsmith) shows what each one is right now.
+    hud.js has helpers like fmt(x) and wearColor(stack). Save this file and the HUD reloads.
+  -->
+  <link rel="stylesheet" href="hud.css">
+  <script src="hudsmith:vellum/lib/hud.js"></script>
+</head>
+<body>
+  <!-- F3 shows its own coordinates, so the HUD steps aside while it's open. -->
+  <div class="info" v-if="!debug" v-cloak>
+    <div class="line"><b>{{ fps }}</b> fps<span v-if="mspt != null">, <b>{{ mspt }}</b> ms a tick</span><span v-if="ping != null">, <b>{{ ping }}</b> ms ping</span></div>
+    <div class="line">XYZ <b>{{ fmt(x) }} {{ fmt(y) }} {{ fmt(z) }}</b></div>
+    <!-- A one-item v-for names otherWorld()'s result, so it's worked out once; v-if leaves it out when null. -->
+    <div class="line" v-for="other in [otherWorld(dimension, x, z)]" v-if="other">{{ other.name }} <b>{{ fmt(other.x) }} {{ fmt(other.z) }}</b></div>
+    <div class="line">Facing <b>{{ facing }}</b> ({{ axis(facing) }})</div>
+    <div class="line">Biome <b>{{ biome.name }}</b></div>
+    <div class="line">Light <b>{{ block_light }}</b> block, <b>{{ sky_light }}</b> sky</div>
+    <div class="line">Day <b>{{ day }}</b>, {{ clock(time) }}</div>
+    <div class="line slime" v-if="slime_chunk">Slime chunk</div>
+    <div class="line" v-if="target">Looking at <b>{{ target.name }}</b><span v-if="target.health != null"> ({{ target.health }}/{{ target.max_health }})</span></div>
+  </div>
+
+  <div class="gear" v-if="!debug" v-cloak>
+    <div class="stack" v-for="stack in [helmet, chestplate, leggings, boots, offhand, mainhand]" v-if="stack">
+      <span class="durability" v-if="stack.max_durability" :style="{ color: wearColor(stack) }">{{ stack.durability }}</span>
+      <item :id="stack.id" :count="stack.count" :components="stack.components"></item>
+    </div>
+  </div>
+</body>
+</html>

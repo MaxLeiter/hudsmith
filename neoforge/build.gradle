@@ -1,0 +1,42 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev'
+}
+
+neoForge {
+    version = neoforge_version
+    runs {
+        configureEach {
+            ideName = "NeoForge ${it.name.capitalize()} (${project.path})"
+        }
+        client {
+            client()
+            gameDirectory = this.mkdir(this.file('runs/client'))
+            // The dev autopilot (DevAutopilot): -Pautopilot[=screenshots|locate], and its -Phudsmith.autopilot.* options.
+            if (project.hasProperty('autopilot')) {
+                systemProperty('hudsmith.autopilot', project.property('autopilot').toString() ?: 'true')
+                programArguments.addAll('--width', '1280', '--height', '720')
+            }
+            project.properties.findAll { it.key.startsWith('hudsmith.') }.each { systemProperty(it.key, it.value.toString()) }
+        }
+    }
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    // A required mod of its own, not bundled: players get Vellum's fixes without a Hudsmith release.
+    implementation("dev.vellum:vellum-neoforge-${minecraft_version}:${vellum_version}")
+}
+
+// multiloader-common marks the usual configurations with the loader; NeoForge's jarJar ones too.
+sourceSets.configureEach {
+    configurations.named(it.getTaskName(null, 'jarJar')) {
+        attributes {
+            attribute(loaderAttribute, 'neoforge')
+        }
+    }
+}

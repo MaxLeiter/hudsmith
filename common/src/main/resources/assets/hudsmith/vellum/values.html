@@ -1,0 +1,112 @@
+<!doctype html>
+<html class="mc-dim">
+<head>
+  <title>Hudsmith</title>
+  <link rel="stylesheet" href="values.css">
+</head>
+<body>
+  <div class="panel" v-cloak>
+    <header>
+      <h1>Hudsmith</h1>
+      <label class="search">
+        <input type="search" v-model="ui.query" placeholder="Search values" autofocus>
+      </label>
+      <button @click="vellum.send('toggle')">{{ live.shown ? 'Hide HUD' : 'Show HUD' }}</button>
+      <button @click="vellum.send('folder')" :title="screen.folder">Open HUD folder</button>
+    </header>
+
+    <p class="note">
+      Your HUD is hud.html and hud.css in the HUD folder: edit them and it changes as you save. Use any value below in
+      them by name.
+    </p>
+    <div class="templates">
+      <span class="label">Start from</span>
+      <button v-for="name in screen.templates" :key="name" @click="useTemplate(name)"
+              :title="'Replace your HUD with the ' + name + ' template (your files are kept as .bak)'">{{ title(name) }}</button>
+      <span class="done" v-if="ui.used">{{ title(ui.used) }} is your HUD now</span>
+    </div>
+    <p class="note" v-if="!live.now">Join a world to see what each value is right now.</p>
+
+    <div class="list">
+      <section v-for="group in groups()" :key="group.category">
+        <h2>{{ group.category }}</h2>
+        <div class="row" v-for="value in group.values" :key="value.name" @click="copy(value.name)"
+             :title="'Click to copy ' + template(value.name)">
+          <code :class="{ copied: ui.copied === value.name }">{{ ui.copied === value.name ? 'Copied' : value.name }}</code>
+          <span class="description"><span v-for="(part, i) in value.parts" :class="{ code: i % 2 === 1 }">{{ part }}</span></span>
+          <span class="now" v-if="live.now">{{ show(live.now[value.name]) }}</span>
+        </div>
+      </section>
+      <p class="note" v-if="groups().length === 0">No value matches "{{ ui.query }}".</p>
+    </div>
+  </div>
+
+  <script>
+    const ui = vellum.state({ query: '', copied: null, used: null });
+    // The values now and whether the HUD shows: the mod sends these as messages, so the list isn't sent again.
+    // (Scripts read the data through vellum.data; only templates see its keys as names.)
+    const live = vellum.state({ now: vellum.data.screen.now, shown: vellum.data.screen.shown });
+    vellum.on('now', now => { live.now = now; });
+    vellum.on('shown', shown => { live.shown = shown; });
+    let copiedTimer = null;
+
+    // Each description split once into its text and `code` parts, which alternate.
+    const values = vellum.data.screen.values.map(value => ({ ...value, parts: value.description.split('`') }));
+
+    // The list grouped by category, filtered by the search, worked out again only when the search changes.
+    let grouped = { query: null, groups: [] };
+    function groups() {
+      if (grouped.query === ui.query) return grouped.groups;
+      const query = ui.query.trim().toLowerCase();
+      const byCategory = new Map();
+      for (const value of values) {
+        if (query && !value.name.includes(query) && !value.description.toLowerCase().includes(query)
+            && !value.category.toLowerCase().includes(query)) continue;
+        if (!byCategory.has(value.category)) byCategory.set(value.category, []);
+        byCategory.get(value.category).push(value);
+      }
+      grouped = { query: ui.query, groups: [...byCategory].map(([category, list]) => ({ category, values: list })) };
+      return grouped.groups;
+    }
+
+    function useTemplate(name) {
+      vellum.send('template', name);
+      vellum.playSound('minecraft:ui.button.click', 0.4);
+      ui.used = name;
+    }
+
+    function title(name) {
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+
+    // Built from pieces so the template compiler doesn't read it as an interpolation.
+    function template(name) {
+      return '{' + '{ ' + name + ' }' + '}';
+    }
+
+    function copy(name) {
+      vellum.send('copy', name);
+      vellum.playSound('minecraft:ui.button.click', 0.4);
+      ui.copied = name;
+      clearTimeout(copiedTimer);
+      copiedTimer = setTimeout(() => { ui.copied = null; }, 1200);
+    }
+
+    // What a value is now, short enough for one row: things with a name by name, lists and maps by size.
+    function show(value) {
+      if (value === null || value === undefined) return '—';
+      if (Array.isArray(value)) {
+        const named = value.filter(v => v != null).map(v => v.name ?? JSON.stringify(v));
+        return named.length === 0 ? 'none' : named.join(', ');
+      }
+      if (typeof value === 'object') {
+        if (value.name != null) return value.name;
+        if (value.title != null) return value.title;
+        const keys = Object.keys(value);
+        return keys.length <= 3 ? keys.map(k => k + ' ' + value[k]).join(', ') : keys.length + ' entries';
+      }
+      return String(value);
+    }
+  </script>
+</body>
+</html>

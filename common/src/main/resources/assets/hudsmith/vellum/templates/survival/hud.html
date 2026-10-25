@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+  <title>Hudsmith: Survival</title>
+  <!--
+    What a survival player checks: where am I, what time is it, can mobs spawn here, which effects are running out,
+    and what's about to break. Item icons label each row; effects use their own icons.
+  -->
+  <link rel="stylesheet" href="hud.css">
+  <script src="hudsmith:vellum/lib/hud.js"></script>
+</head>
+<body>
+  <div class="card" v-if="!debug" v-cloak>
+    <div class="row">
+      <item id="minecraft:compass"></item>
+      <span><b>{{ bx }}</b> <b>{{ by }}</b> <b>{{ bz }}</b> <span class="dim">facing</span> {{ facing }}</span>
+    </div>
+    <div class="row">
+      <item id="minecraft:clock"></item>
+      <span>Day <b>{{ day }}</b>, {{ clock(time) }} <span class="night" v-if="isNight(time)">(night)</span></span>
+    </div>
+    <div class="row">
+      <item id="minecraft:oak_sapling"></item>
+      <span>{{ biome.name }}<span class="dim" v-if="weather !== 'clear'">, {{ weather }}</span></span>
+    </div>
+    <div class="row" :class="{ danger: mobsCanSpawn(block_light, light) }">
+      <item id="minecraft:torch"></item>
+      <span v-if="mobsCanSpawn(block_light, light)">Light <b>{{ block_light }}</b>: mobs can spawn here</span>
+      <span v-else>Light <b>{{ block_light }}</b> <span class="dim">block,</span> <b>{{ sky_light }}</b> <span class="dim">sky</span></span>
+    </div>
+    <div class="row" v-if="slime_chunk">
+      <item id="minecraft:slime_ball"></item>
+      <span class="slime">Slime chunk</span>
+    </div>
+
+    <div class="effects" v-if="effects.length">
+      <div class="effect" v-for="effect in effects" :key="effect.id">
+        <img :src="effect.icon">
+        <span>{{ effect.name }}<span v-if="effect.level > 1"> {{ roman(effect.level) }}</span></span>
+        <span class="time">{{ effect.duration }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="gear" v-if="!debug" v-cloak>
+    <div class="stack" v-for="stack in [helmet, chestplate, leggings, boots, offhand, mainhand]" v-if="stack">
+      <!-- No components: this page draws its own durability bar under the item instead of vanilla's. -->
+      <item :id="stack.id" :count="stack.count"></item>
+      <div class="bar" v-if="stack.max_durability">
+        <div class="fill" :style="{ width: (wear(stack) * 100) + '%', background: wearColor(stack) }"></div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

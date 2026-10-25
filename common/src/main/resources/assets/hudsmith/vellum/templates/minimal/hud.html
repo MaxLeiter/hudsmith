@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+<head>
+  <title>Hudsmith: Minimal</title>
+  <!-- The simplest useful HUD: one line, top left. -->
+  <link rel="stylesheet" href="hud.css">
+  <script src="hudsmith:vellum/lib/hud.js"></script>
+</head>
+<body>
+  <div class="pill" v-if="!debug" v-cloak>
+    <span>{{ bx }} {{ by }} {{ bz }}</span>
+    <span>{{ biome.name }}</span>
+    <span>{{ clock(time) }}</span>
+  </div>
+</body>
+</html>

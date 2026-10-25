@@ -1,0 +1,26 @@
+body { height: 100vh; pointer-events: none; color: #dcdcdc; text-shadow: minecraft; }
+[v-cloak] { display: none; }
+
+.panel {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  min-width: 128px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 5px;
+  background: rgba(10, 12, 16, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.metric { display: flex; flex-direction: column; gap: 1px; margin-bottom: 2px; }
+.head { display: flex; align-items: baseline; gap: 4px; }
+.label { color: #8a8f9c; width: 36px; }
+.dim { margin-left: auto; color: #8a8f9c; }
+canvas { width: 120px; height: 22px; border-radius: 2px; }
+/* One line each: a long value widens the panel rather than wrapping. */
+.row { display: flex; gap: 6px; white-space: nowrap; }
+.row span:last-child { margin-left: auto; color: #ffffff; }
+.budget { height: 2px; background: rgba(255, 255, 255, 0.1); border-radius: 1px; overflow: hidden; }
+.used { height: 2px; }

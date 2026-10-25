@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+  <title>Hudsmith: Compass</title>
+  <!-- A compass strip at the top that slides as you turn, with where you are under it, and your gear. -->
+  <link rel="stylesheet" href="hud.css">
+  <script src="hudsmith:vellum/lib/hud.js"></script>
+</head>
+<body>
+  <div class="top" v-if="!debug" v-cloak>
+    <div class="compass">
+      <div v-for="mark in MARKS" :key="mark.deg" :class="['mark', mark.kind]" :style="{ left: place(mark.deg) }">
+        <span v-if="mark.label">{{ mark.label }}</span>
+      </div>
+      <div class="needle"></div>
+    </div>
+    <div class="where">
+      <span><b>{{ bx }}</b> <b>{{ by }}</b> <b>{{ bz }}</b></span>
+      <span>{{ biome.name }}</span>
+      <span>{{ clock(time) }}</span>
+      <span class="nether" v-for="other in [otherWorld(dimension, x, z)]" v-if="other">{{ other.name }} {{ Math.round(other.x) }} {{ Math.round(other.z) }}</span>
+    </div>
+  </div>
+
+  <div class="gear" v-if="!debug" v-cloak>
+    <div class="stack" v-for="stack in [helmet, chestplate, leggings, boots, offhand, mainhand]" v-if="stack">
+      <item :id="stack.id" :count="stack.count" :components="stack.components"></item>
+    </div>
+  </div>
+
+  <script>
+    const WIDTH = 180;              // the strip, in GUI pixels
+    const PX_PER_DEGREE = 1.4;
+    const NAMES = { 0: 'N', 45: 'NE', 90: 'E', 135: 'SE', 180: 'S', 225: 'SW', 270: 'W', 315: 'NW' };
+
+    // A mark every 15°: labels at the eight points, longer ticks between.
+    const MARKS = [];
+    for (let deg = 0; deg < 360; deg += 15) {
+      MARKS.push({ deg, label: NAMES[deg] ?? '', kind: deg % 90 === 0 ? 'cardinal' : deg % 45 === 0 ? 'ordinal' : 'tick' });
+    }
+
+    // Where a mark sits on the strip: heading() (hud.js) is where you look, in the middle.
+    function place(deg) {
+      let offset = (deg - heading(vellum.data.yaw) + 540) % 360 - 180;   // -180..180, 0 straight ahead
+      return (WIDTH / 2 + offset * PX_PER_DEGREE) + 'px';
+    }
+  </script>
+</body>
+</html>

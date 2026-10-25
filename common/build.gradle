@@ -1,0 +1,45 @@
+plugins {
+    id 'multiloader-common'
+    id 'net.neoforged.moddev'
+}
+
+neoForge {
+    neoFormVersion = neo_form_version
+}
+
+dependencies {
+    compileOnly("dev.vellum:vellum-common-${minecraft_version}:${vellum_version}")
+    testImplementation(platform("org.junit:junit-bom:${junit_version}"))
+    testImplementation('org.junit.jupiter:junit-jupiter')
+    testRuntimeOnly('org.junit.platform:junit-platform-launcher')
+}
+
+// The unit tests see the game's classes (and Gson) as the main code does.
+neoForge.addModdingDependenciesTo(sourceSets.test)
+
+test {
+    useJUnitPlatform()
+}
+
+configurations {
+    commonJava {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+    commonResources {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+}
+
+// The loaders compile common's sources and copy its resources themselves. Stonecutter sets the source directories:
+// the shared src/ for the active version, a generated copy for the others, and versions/<version>/src for files of one
+// version only.
+artifacts {
+    sourceSets.main.java.srcDirs.each { dir ->
+        commonJava(dir) { builtBy(sourceSets.main.java.sourceDirectories) }
+    }
+    sourceSets.main.resources.srcDirs.each { dir ->
+        commonResources(dir) { builtBy(sourceSets.main.resources.sourceDirectories) }
+    }
+}

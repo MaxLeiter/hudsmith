@@ -1,0 +1,61 @@
+body { height: 100vh; pointer-events: none; color: #e0e0e0; text-shadow: minecraft; }
+[v-cloak] { display: none; }
+b { font-weight: normal; color: #ffffff; margin-right: 5px; }
+.dim { color: #8a8f9c; }
+
+.where {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 4px;
+  border-radius: 5px;
+  background: rgba(16, 18, 24, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.coords { display: flex; align-items: center; margin-bottom: 4px; }
+/* Uneven padding centers the letter in the Minecraft font: see "Text in the Minecraft font" in Vellum's
+   docs/api/elements.md. */
+.axis { margin-right: 2px; padding: 2px 1px 0 2px; border-radius: 2px; color: #101010; text-shadow: none; }
+.axis.x { background: #ff6b6b; }
+.axis.y { background: #7dff7d; }
+.axis.z { background: #6bb5ff; }
+
+.chunk { display: flex; gap: 6px; align-items: flex-start; }
+/* 16 by 16 cells of 3px. The checkerboard is two layers of 6px stripes, crossed. */
+.map {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background-color: rgba(0, 0, 0, 0.4);
+  background-image:
+    repeating-linear-gradient(to right, rgba(255, 255, 255, 0.07) 0, rgba(255, 255, 255, 0.07) 3px, transparent 3px, transparent 6px),
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 0, rgba(255, 255, 255, 0.04) 3px, transparent 3px, transparent 6px);
+}
+.here { position: absolute; width: 3px; height: 3px; background: #ffaa3c; }
+.facts { display: flex; flex-direction: column; gap: 1px; line-height: 10px; }
+
+.target {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px;
+  border-radius: 6px;
+  background: rgba(16, 18, 24, 0.62);
+  border: 1px solid rgba(255, 170, 60, 0.35);
+  animation: in 150ms ease-out both;
+}
+@keyframes in { from { opacity: 0; transform: translateY(-50%) translateX(6px); } }
+.target model { width: 48px; height: 48px; animation: spin 10s linear infinite; }
+@keyframes spin { from { -mc-yaw: 0deg; } to { -mc-yaw: 360deg; } }
+.name { margin-top: 3px; color: #ffffff; text-align: center; }
+.id { color: #8a8f9c; }
+.pos { color: #ffaa3c; }
+.props { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; margin-top: 3px; }
+.prop { padding: 0 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); }
+.health { color: #ff6b6b; }

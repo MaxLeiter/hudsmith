@@ -1,0 +1,21 @@
+# idea
+out
+*.ipr
+*.iws
+*.iml
+.idea/*
+!.idea/scopes
+
+# gradle
+build
+.gradle
+
+# other
+eclipse
+run
+runs
+*.hprof
+.DS_Store
+
+# agent scratch
+.claude/

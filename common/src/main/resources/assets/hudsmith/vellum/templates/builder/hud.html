@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+  <title>Hudsmith: Builder</title>
+  <!--
+    For building: exact block coordinates, where you are in your chunk (a 16 by 16 map, north up), and what you're
+    looking at: a block in 3D with its id, position and block state, or an entity with its health.
+  -->
+  <link rel="stylesheet" href="hud.css">
+  <script src="hudsmith:vellum/lib/hud.js"></script>
+</head>
+<body>
+  <div class="where" v-if="!debug" v-cloak>
+    <div class="coords">
+      <span class="axis x">X</span><b>{{ bx }}</b>
+      <span class="axis y">Y</span><b>{{ by }}</b>
+      <span class="axis z">Z</span><b>{{ bz }}</b>
+    </div>
+    <div class="chunk">
+      <!-- The grid is drawn by CSS; only the marker moves. -->
+      <div class="map">
+        <div class="here" :style="{ left: inChunk(x) * 3 + 'px', top: inChunk(z) * 3 + 'px' }"></div>
+      </div>
+      <div class="facts">
+        <div><span class="dim">Chunk</span> {{ chunk(x) }}, {{ chunk(z) }}</div>
+        <div><span class="dim">In chunk</span> {{ inChunk(x) }}, {{ inChunk(y) }}, {{ inChunk(z) }}</div>
+        <div><span class="dim">Region</span> {{ region(x, z) }}</div>
+        <div><span class="dim">Facing</span> {{ facing }} {{ axis(facing) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="target" v-if="!debug && target" v-cloak>
+    <model v-if="target.kind === 'block'" :block="target.state"></model>
+    <div class="name">{{ target.name }}</div>
+    <div class="id">{{ target.id }}</div>
+    <div class="pos">{{ target.x }}, {{ target.y }}, {{ target.z }}</div>
+    <div class="health" v-if="target.health != null">{{ target.health }} / {{ target.max_health }} health</div>
+    <div class="props" v-if="target.properties">
+      <span class="prop" v-for="(value, key) in target.properties" :key="key"><span class="dim">{{ key }}</span> {{ value }}</span>
+    </div>
+  </div>
+</body>
+</html>

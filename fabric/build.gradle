@@ -1,0 +1,57 @@
+plugins {
+    id 'multiloader-loader'
+}
+
+// 26.x is unobfuscated and builds with Loom as it is. Older versions are obfuscated: they build with the remapping
+// Loom, against Mojang's mappings, and the jar is remapped to intermediary names.
+def obfuscated = stonecutter.current.parsed < '26'
+apply plugin: obfuscated ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
+
+if (obfuscated) {
+    // java.withSourcesJar() (multiloader-common) ran before Loom was applied, so the plain sources jar is still in the
+    // published variant beside Loom's remapped one: keep the remapped one.
+    afterEvaluate {
+        configurations.named('sourcesElements') {
+            outgoing.artifacts.removeIf { it.buildDependencies.getDependencies(null).contains(tasks.sourcesJar) }
+        }
+    }
+}
+
+dependencies {
+    minecraft("com.mojang:minecraft:${minecraft_version}")
+    // modX on the obfuscated versions (remapped by Loom), plain configurations on 26.x.
+    def mod = { String configuration -> obfuscated ? "mod${configuration.capitalize()}" : configuration }
+    if (obfuscated) mappings(loom.officialMojangMappings())
+    add(mod('implementation'), "net.fabricmc:fabric-loader:${fabric_loader_version}")
+    add(mod('implementation'), "net.fabricmc.fabric-api:fabric-api:${fabric_version}")
+
+    // A required mod of its own, not bundled: players get Vellum's fixes without a Hudsmith release.
+    add(mod('implementation'), "dev.vellum:vellum-fabric-${minecraft_version}:${vellum_version}")
+    add(mod('compileOnly'), "com.terraformersmc:modmenu:${modmenu_version}") { transitive = false }
+}
+
+loom {
+    runs {
+        client {
+            client()
+            setConfigName('Fabric Client')
+            ideConfigGenerated(true)
+            runDir('runs/client')
+            // The dev autopilot (DevAutopilot): -Pautopilot[=screenshots|locate], and its -Phudsmith.autopilot.* options.
+            if (project.hasProperty('autopilot')) {
+                property('hudsmith.autopilot', project.property('autopilot').toString() ?: 'true')
+                programArgs('--width', '1280', '--height', '720')
+            }
+            project.properties.findAll { it.key.startsWith('hudsmith.') }.each { property(it.key, it.value.toString()) }
+        }
+    }
+}
+
+// multiloader-common marks the usual configurations with the loader; Loom's own ones too.
+['includeInternal', 'modCompileClasspath'].each { variant ->
+    configurations.named(variant) {
+        attributes {
+            attribute(loaderAttribute, 'fabric')
+        }
+    }
+}
