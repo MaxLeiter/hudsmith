@@ -130,6 +130,14 @@ Every value is listed [here](docs/values.md).
 
 Hudsmith needs [Vellum](https://github.com/MaxLeiter/vellum) 0.9.0 or newer.
 
+## For resource packs and modpacks
+
+Resource packs and mods can add templates in `assets/<namespace>/hudsmith/templates/<name>/`: a `hud.html` plus
+whatever it links (CSS, scripts, PNG images). They show up on the Hudsmith screen, and picking one copies its files
+into `config/hudsmith/`.
+
+Modpacks can ship `config/hudsmith/hud.html` and `hud.css` directly.
+
 ## For mod developers
 
 Your mod can add values that players put on their HUD. Register them on the client during setup:

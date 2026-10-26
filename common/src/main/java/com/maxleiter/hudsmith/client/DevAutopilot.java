@@ -1,9 +1,11 @@
 package com.maxleiter.hudsmith.client;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -223,9 +225,70 @@ public final class DevAutopilot {
             }
         });
         until("the HUD reloads with the edit", () -> hudText(".pill").contains("(edited)"), 5);
+
+        // A resource pack's template: it's listed after the jar's, and picking it copies its files, but not notes.txt.
+        steps.add(() -> {
+            writeTestPack(mc);
+            mc.getResourcePackRepository().reload();
+            check(mc.getResourcePackRepository().addPack(TEST_PACK), "enabled the test resource pack");
+            mc.reloadResourcePacks();
+        });
+        until("the resource pack's template is found", () -> !McClient.overlayShown(mc)
+                && HudFolder.packTemplates().containsKey("hudsmith_autopilot:pack_test"), 10);
+        openScreen();
+        String packButton = ".templates button:nth-of-type(" + (HudFolder.TEMPLATES.size() + 1) + ")";
+        steps.add(() -> {
+            check(VellumAutomation.screen().flatMap(page -> page.text(packButton)).orElse("").trim().equals("Pack test"),
+                    "the Hudsmith screen lists the pack's template as Pack test");
+            check(VellumAutomation.screen().map(page -> page.click(packButton)).orElse(false), "clicked the pack's template");
+        });
+        steps.add(() -> {
+            McClient.setScreen(null);
+            wait = 10;
+        });
+        until("the HUD is the pack's template", () -> hudText(".pack-test").contains("From a pack"), 5);
+        steps.add(() -> {
+            check(Files.exists(HudFolder.dir().resolve("img/mark.png")), "the template's image was copied");
+            check(!Files.exists(HudFolder.dir().resolve("notes.txt")), "the template's notes.txt was left out");
+            check(read(HudFolder.dir().resolve("hud.html.bak")).contains("(edited)"), "the edited hud.html was kept as hud.html.bak");
+            mc.getResourcePackRepository().removePack(TEST_PACK);
+            mc.reloadResourcePacks();
+        });
         steps.add(() -> HudFolder.useTemplate("default"));
         until("the HUD is the default again", () -> VellumAutomation.hud(HudsmithClient.HUD)
                 .map(page -> page.exists(".info")).orElse(false), 5);
+    }
+
+    private static final String TEST_PACK = "file/hudsmith-autopilot";
+
+    private static String read(Path file) {
+        try {
+            return Files.readString(file);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /** A resource pack in resourcepacks/ with one template, hudsmith_autopilot:pack_test. */
+    private static void writeTestPack(Minecraft mc) {
+        Path pack = mc.getResourcePackDirectory().resolve("hudsmith-autopilot");
+        Path template = pack.resolve("assets/hudsmith_autopilot/hudsmith/templates/pack_test");
+        try {
+            Files.createDirectories(template.resolve("img"));
+            Files.writeString(pack.resolve("pack.mcmeta"), McClient.packMeta("Hudsmith autopilot"));
+            Files.writeString(template.resolve("hud.html"), """
+                    <link rel="stylesheet" href="hud.css">
+                    <div class="pack-test"><img src="img/mark.png"> From a pack: {{ bx }} {{ bz }}</div>
+                    """);
+            Files.writeString(template.resolve("hud.css"), ".pack-test { position: absolute; top: 4px; left: 4px; color: #ffffff; }\n"
+                    + ".pack-test img { width: 16px; height: 16px; }\n");
+            Files.writeString(template.resolve("notes.txt"), "Not part of the HUD.\n");
+            try (InputStream icon = DevAutopilot.class.getResourceAsStream("/assets/hudsmith/icon.png")) {
+                Files.copy(icon, template.resolve("img/mark.png"), StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException("Cannot write the test resource pack " + pack, e);
+        }
     }
 
     /** Opens the Hudsmith screen and waits until it lists every value. */

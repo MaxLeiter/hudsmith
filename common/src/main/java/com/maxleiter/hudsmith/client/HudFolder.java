@@ -10,9 +10,13 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import com.maxleiter.hudsmith.Hudsmith;
 import com.maxleiter.hudsmith.platform.Platform;
+import net.minecraft.client.Minecraft;
+import net.minecraft.server.packs.resources.Resource;
 
 /**
  * config/hudsmith/: the player's HUD page (hud.html, hud.css and whatever they link), settings.json, and VALUES.md,
@@ -23,6 +27,14 @@ public final class HudFolder {
     private static final List<String> FILES = List.of("hud.html", "hud.css");
     /** The templates in the jar, the default HUD first, then simplest first. */
     public static final List<String> TEMPLATES = List.of("default", "minimal", "compass", "survival", "builder", "performance");
+    /** Where resource packs (and mods) put templates: assets/<namespace>/hudsmith/templates/<name>/hud.html... */
+    private static final String PACK_TEMPLATES = "hudsmith/templates";
+    /** What a pack's template may put in the folder: pages, stylesheets, scripts and images, never the settings. */
+    private static final Set<String> PACK_FILE_TYPES = Set.of(".html", ".css", ".js", ".png");
+
+    /** A resource pack's template: its id is namespace:name, its files are by path inside the template's folder. */
+    public record PackTemplate(String id, String name, String pack, Map<String, Resource> files) {
+    }
 
     private HudFolder() {
     }
@@ -41,9 +53,61 @@ public final class HudFolder {
      * the files change and reloads the HUD.
      */
     public static void useTemplate(String name) {
-        if (!TEMPLATES.contains(name)) throw new IllegalArgumentException("No Hudsmith template " + name);
-        copyTemplate(name, true);
-        Hudsmith.LOG.info("Hudsmith: the HUD is now the {} template (the previous files are hud.html.bak and hud.css.bak)", name);
+        if (TEMPLATES.contains(name)) {
+            copyTemplate(name, true);
+        } else {
+            PackTemplate template = packTemplates().get(name);
+            if (template == null) throw new IllegalArgumentException("No Hudsmith template " + name);
+            copyPackTemplate(template);
+        }
+        Hudsmith.LOG.info("Hudsmith: the HUD is now the {} template (files it replaced are kept as .bak)", name);
+    }
+
+    /** The templates in the loaded resource packs, by id. Mods' jars are resource packs too. */
+    public static Map<String, PackTemplate> packTemplates() {
+        Map<String, Map<String, Resource>> files = new TreeMap<>();
+        Minecraft.getInstance().getResourceManager().listResources(PACK_TEMPLATES, id -> true).forEach((id, resource) -> {
+            String[] parts = id.getPath().substring(PACK_TEMPLATES.length() + 1).split("/", 2);
+            if (parts.length < 2) {
+                Hudsmith.LOG.warn("Hudsmith: {} in {} isn't in a template's folder", id, resource.sourcePackId());
+                return;
+            }
+            files.computeIfAbsent(id.getNamespace() + ":" + parts[0], k -> new TreeMap<>()).put(parts[1], resource);
+        });
+        Map<String, PackTemplate> templates = new LinkedHashMap<>();
+        files.forEach((id, byPath) -> {
+            Resource html = byPath.get("hud.html");
+            if (html == null) {
+                Hudsmith.LOG.warn("Hudsmith: the {} template has no hud.html", id);
+                return;
+            }
+            templates.put(id, new PackTemplate(id, id.substring(id.indexOf(':') + 1), html.sourcePackId().replaceFirst("^file/", ""), byPath));
+        });
+        return templates;
+    }
+
+    /** Copies a pack's template into the folder, over the files there (kept as .bak). */
+    private static void copyPackTemplate(PackTemplate template) {
+        Path dir = dir().toAbsolutePath().normalize();
+        try {
+            for (Map.Entry<String, Resource> file : template.files().entrySet()) {
+                String path = file.getKey();
+                if (PACK_FILE_TYPES.stream().noneMatch(path::endsWith)) {
+                    Hudsmith.LOG.warn("Hudsmith: left {} out of the {} template: only .html, .css, .js and .png files are copied",
+                            path, template.id());
+                    continue;
+                }
+                Path target = dir.resolve(path).normalize();
+                if (!target.startsWith(dir)) throw new IllegalArgumentException("The " + template.id() + " template's " + path + " is outside its folder");
+                Files.createDirectories(target.getParent());
+                if (Files.exists(target)) Files.copy(target, target.resolveSibling(target.getFileName() + ".bak"), StandardCopyOption.REPLACE_EXISTING);
+                try (InputStream in = file.getValue().open()) {
+                    Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException("Couldn't copy the " + template.id() + " template into " + dir, e);
+        }
     }
 
     /** Copies a template's files into the folder: over the current ones (kept as .bak), or only where missing. */

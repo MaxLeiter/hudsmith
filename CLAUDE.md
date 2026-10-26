@@ -21,6 +21,8 @@ as a top-level data key, once a tick. NeoForge + Fabric, Minecraft 26.3 / 26.2 /
   (copied to `config/hudsmith/` on first run) and the README's templates, each with a `preview.png` (left out of the
   jars); `values.{html,css}` is the Hudsmith screen (`client/ValuesScreen`); `lib/hud.js` the pages' helpers. Add a
   template to `HudFolder.TEMPLATES`, a scene for it in `DevAutopilot.scenes()`, and a row in the README's table.
+  Resource packs and mods add templates in `assets/<namespace>/hudsmith/templates/<name>/` (`HudFolder.packTemplates`);
+  picking one copies its .html, .css, .js and .png files into the folder.
 - `HudsmithClient` computes the values once a tick and pushes them to the HUD and to its listeners (the open screen,
   the autopilot's template overlays); nothing else computes them.
 - README pictures: `tools/headless.sh :neoforge:26.3:runClient -Pautopilot=screenshots` (seed 42, a staged scene per

@@ -6,5 +6,5 @@ First release.
 
 - Your HUD is `hud.html` and `hud.css` in `config/hudsmith/`, reloaded when you save them.
 - 53 values, listed in `docs/values.md`. Other mods can add their own with `HudsmithApi`.
-- Five templates to start from, on the Hudsmith screen (`/hudsmith`).
+- Five templates to start from, on the Hudsmith screen (`/hudsmith`). Resource packs and mods can add more.
 - Minecraft 26.3, 26.2 and 1.21.1, on NeoForge and Fabric. Needs Vellum 0.9.0.

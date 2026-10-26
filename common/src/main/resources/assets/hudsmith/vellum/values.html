@@ -21,8 +21,8 @@
     </p>
     <div class="templates">
       <span class="label">Start from</span>
-      <button v-for="name in screen.templates" :key="name" @click="useTemplate(name)"
-              :title="'Replace your HUD with the ' + name + ' template (your files are kept as .bak)'">{{ title(name) }}</button>
+      <button v-for="t in screen.templates" :key="t.id" @click="useTemplate(t)"
+              :title="'Replace your HUD with ' + title(t) + (t.pack ? ' from ' + t.pack : '') + ' (your files are kept as .bak)'">{{ title(t) }}</button>
       <span class="done" v-if="ui.used">{{ title(ui.used) }} is your HUD now</span>
     </div>
     <p class="note" v-if="!live.now">Join a world to see what each value is right now.</p>
@@ -69,13 +69,15 @@
       return grouped.groups;
     }
 
-    function useTemplate(name) {
-      vellum.send('template', name);
+    function useTemplate(template) {
+      vellum.send('template', template.id);
       vellum.playSound('minecraft:ui.button.click', 0.4);
-      ui.used = name;
+      ui.used = template;
     }
 
-    function title(name) {
+    // "survival" is Survival, "my_pack_hud" is My pack hud.
+    function title(template) {
+      const name = template.name.replace(/_/g, ' ');
       return name.charAt(0).toUpperCase() + name.slice(1);
     }
 

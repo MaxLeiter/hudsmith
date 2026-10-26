@@ -88,4 +88,22 @@ public final class McClient {
         //?} else
         /*return mc.getDebugOverlay().showDebugScreen();*/
     }
+
+    /** Whether an overlay (resources reloading) covers the screen. */
+    public static boolean overlayShown(Minecraft mc) {
+        //? if >=26 {
+        return mc.gui.overlay() != null;
+        //?} else
+        /*return mc.getOverlay() != null;*/
+    }
+
+    /** pack.mcmeta for a resource pack made for this version. */
+    public static String packMeta(String description) {
+        //? if >=26 {
+        var format = net.minecraft.SharedConstants.getCurrentVersion().packVersion(net.minecraft.server.packs.PackType.CLIENT_RESOURCES);
+        String range = "[" + format.major() + ", " + format.minor() + "]";
+        return "{\"pack\": {\"description\": \"" + description + "\", \"min_format\": " + range + ", \"max_format\": " + range + "}}";
+        //?} else
+        /*return "{\"pack\": {\"description\": \"" + description + "\", \"pack_format\": " + net.minecraft.SharedConstants.getCurrentVersion().getPackVersion(net.minecraft.server.packs.PackType.CLIENT_RESOURCES) + "}}";*/
+    }
 }

@@ -36,7 +36,8 @@ public final class ValuesScreen {
         }
         screen.add("values", values);
         JsonArray templates = new JsonArray();
-        HudFolder.TEMPLATES.forEach(templates::add);
+        for (String name : HudFolder.TEMPLATES) templates.add(template(name, name, null));
+        for (HudFolder.PackTemplate pack : HudFolder.packTemplates().values()) templates.add(template(pack.id(), pack.name(), pack.pack()));
         screen.add("templates", templates);
         screen.addProperty("folder", HudFolder.dir().toString());
         screen.add("now", HudsmithClient.values());
@@ -62,10 +63,19 @@ public final class ValuesScreen {
                 });
     }
 
-    /** The page asks to replace the HUD with a template. A resource pack can replace the page: only known names. */
+    /** A template button: the jar's templates have no pack. */
+    private static JsonObject template(String id, String name, @Nullable String pack) {
+        JsonObject template = new JsonObject();
+        template.addProperty("id", id);
+        template.addProperty("name", name);
+        template.addProperty("pack", pack);
+        return template;
+    }
+
+    /** The page asks to replace the HUD with a template. A resource pack can replace the page: only known ids. */
     private static void useTemplate(JsonElement value) {
-        String name = string(value);
-        if (name != null && HudFolder.TEMPLATES.contains(name)) HudFolder.useTemplate(name);
+        String id = string(value);
+        if (id != null && (HudFolder.TEMPLATES.contains(id) || HudFolder.packTemplates().containsKey(id))) HudFolder.useTemplate(id);
     }
 
     /** The page asks to copy a value's template text. Only known names. */
