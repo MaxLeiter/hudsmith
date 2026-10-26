@@ -9,7 +9,7 @@ top left; armor and tools with their durability bottom right](docs/default.png)
 
 ## What a HUD looks like
 
-The Minimal template;
+A minimal template:
 
 <table>
 <tr>
@@ -41,7 +41,7 @@ The Minimal template;
 </tr>
 </table>
 
-Vellum's [scripting docs](https://github.com/MaxLeiter/vellum/blob/main/docs/SCRIPTING.md) cover documents what your page may contain.
+Vellum's [scripting docs](https://github.com/MaxLeiter/vellum/blob/main/docs/SCRIPTING.md) cover what your page may contain.
 
 ## Templates
 
