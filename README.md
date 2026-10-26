@@ -1,7 +1,6 @@
 # Hudsmith
 
-Hudsmith draws your HUD from `hud.html` and `hud.css` in your config folder. You pick which values go on
-it and style them with CSS, and the HUD reloads when you save the file.
+Hudsmith draws your HUD from `hud.html` and `hud.css` in your config folder. Edit to your hearts content, style with CSS, and the HUD will reload when you save.
 
 Hudsmith is powered by the web engine [Vellum](https://github.com/MaxLeiter/vellum), which enables live reloading, Vue-like templating (`v-if`, `v-for`, `@click`, etc), and JavaScript.
 
