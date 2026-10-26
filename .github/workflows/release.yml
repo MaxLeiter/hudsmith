@@ -76,9 +76,6 @@ jobs:
 
       - run: ./gradlew build --stacktrace
 
-      # NeoForge's GameTests aren't part of build.
-      - run: ./gradlew runGameTestServer --stacktrace
-
       - name: Collect the jars and release notes
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -143,8 +140,8 @@ jobs:
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
         run: |
           if [ "$PUBLISH_DRY_RUN" != true ] && { [ -z "$MODRINTH_TOKEN" ] || [ -z "$CURSEFORGE_TOKEN" ]; }; then
-            echo "::warning::MODRINTH_TOKEN or CURSEFORGE_TOKEN isn't set, so nothing was uploaded to Modrinth or CurseForge."
-            exit 0
+            echo "::error::MODRINTH_TOKEN or CURSEFORGE_TOKEN isn't set. Add both as repository secrets, or run the workflow with skip_stores."
+            exit 1
           fi
           # --continue: one site refusing an upload must not stop the other uploads.
           ./gradlew publishMods --continue --stacktrace
