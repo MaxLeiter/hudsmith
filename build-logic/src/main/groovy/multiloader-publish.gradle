@@ -82,7 +82,7 @@ publishMods {
         accessToken = providers.environmentVariable('CURSEFORGE_TOKEN')
         minecraftVersions.addAll(gameVersions)
         client = true
-        server = true
+        server = false
         if (loader == 'fabric') requires('fabric-api')
         requires('vellum-gui')
     }
