@@ -19,7 +19,7 @@ neoforge_logo_key = "iconFile"
 modmenu_version = "21.0.0"
 # Vellum, from https://maven.maxleiter.com (see gradle.properties). 0.7.0 is the first with folder pages, which the
 # HUD needs on every Minecraft version; newer ones work too.
-vellum_version = "0.7.0"
+vellum_version = "0.9.0"
 
 ["26.2"]
 minecraft_version = "26.2"
@@ -33,7 +33,7 @@ neoforge_version = "26.2.0.88"
 neoforge_loader_version_range = "[4,)"
 neoforge_logo_key = "iconFile"
 modmenu_version = "20.0.3"
-vellum_version = "0.7.0"
+vellum_version = "0.9.0"
 
 ["1.21.1"]
 minecraft_version = "1.21.1"
@@ -48,4 +48,4 @@ neoforge_version = "21.1.255"
 neoforge_loader_version_range = "[4,)"
 neoforge_logo_key = "logoFile"
 modmenu_version = "11.0.5"
-vellum_version = "0.7.0"
+vellum_version = "0.9.0"

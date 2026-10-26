@@ -3,7 +3,7 @@
 Hudsmith draws your HUD from a web page, `hud.html` and `hud.css` in your config folder. You pick which values go on
 it and style them with CSS, and the HUD reloads when you save the file.
 
-For NeoForge and Fabric on Minecraft 26.3, 26.2 and 1.21.1. Not released yet.
+For NeoForge and Fabric on Minecraft 26.3, 26.2 and 1.21.1.
 
 ![The default HUD in a plains village by the sea: FPS, coordinates, Nether coordinates, facing, biome, light and time
 top left; armor and tools with their durability bottom right](docs/default.png)
@@ -143,7 +143,7 @@ the values your other mods add.
 | 26.2 | 26.2.0.88+ | Loader 0.19.5+, Fabric API |
 | 1.21.1 | 21.1.255+ | Loader 0.19.5+, Fabric API |
 
-Hudsmith needs [Vellum](https://github.com/MaxLeiter/vellum) 0.7.0 or newer. It's client-only, so servers don't
+Hudsmith needs [Vellum](https://github.com/MaxLeiter/vellum) 0.9.0 or newer. It's client-only, so servers don't
 need it.
 
 ## For mod developers
