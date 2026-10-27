@@ -75,6 +75,7 @@ publishMods {
         minecraftVersions.addAll(gameVersions)
         if (loader == 'fabric') requires('fabric-api')
         requires { id = 'VubPz2qI' }   // Vellum
+        environment = CLIENT_ONLY
     }
 
     curseforge {
